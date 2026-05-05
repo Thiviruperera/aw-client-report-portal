@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}{{ client.household_name }} · AW Client Report Portal{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <a href="{{ url_for('clients_list') }}" class="back-link">&larr; All clients</a>
+    <h1>{{ client.household_name }}</h1>
+  </div>
+  <a href="{{ url_for('report_new', client_id=client.id) }}" class="btn btn-primary">Start New Quarterly Report</a>
+</div>
+
+<section class="card">
+  <h2>Household</h2>
+  <div class="grid two-col">
+    <div>
+      <h3 class="muted small">Client 1</h3>
+      <div><strong>{{ client.primary_first }} {{ client.primary_last }}</strong></div>
+      <div class="small muted">DOB {{ client.primary_dob.strftime('%b %d, %Y') }} · Age {{ client.primary_age }} · SSN ...{{ client.primary_ssn_last4 }}</div>
+    </div>
+    {% if client.has_spouse %}
+    <div>
+      <h3 class="muted small">Client 2</h3>
+      <div><strong>{{ client.spouse_first }} {{ client.spouse_last }}</strong></div>
+      <div class="small muted">DOB {{ client.spouse_dob.strftime('%b %d, %Y') }} · Age {{ client.spouse_age }} · SSN ...{{ client.spouse_ssn_last4 }}</div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="grid three-col">
+    <div><span class="muted small">Monthly Inflow</span><div class="num strong">{{ client.monthly_inflow | money }}</div></div>
+    <div><span class="muted small">Monthly Outflow</span><div class="num strong">{{ client.monthly_outflow | money }}</div></div>
+    <div><span class="muted small">Insurance Deductibles</span><div class="num strong">{{ client.total_insurance_deductibles | money }}</div></div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Account Structure</h2>
+  <div class="grid two-col">
+    <div>
+      <h3>Retirement</h3>
+      <ul class="account-list">
+        {% for a in client.accounts_json if a.category == 'RETIREMENT' %}
+        <li>
+          <span class="badge owner-{{ a.owner | lower }}">{{ 'Client 1' if a.owner == 'CLIENT1' else 'Client 2' if a.owner == 'CLIENT2' else 'Joint' }}</span>
+          <span class="strong">{{ a.label }}</span>
+          <span class="muted small">{{ a.institution }} ...{{ a.last_four }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div>
+      <h3>Non-Retirement</h3>
+      <ul class="account-list">
+        {% for a in client.accounts_json if a.category == 'NON_RETIREMENT' %}
+        <li>
+          <span class="badge owner-{{ a.owner | lower }}">{{ 'Client 1' if a.owner == 'CLIENT1' else 'Client 2' if a.owner == 'CLIENT2' else 'Joint' }}</span>
+          <span class="strong">{{ a.label }}</span>
+          <span class="muted small">{{ a.institution }} ...{{ a.last_four }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="grid two-col">
+    <div>
+      <h3>Trust Properties</h3>
+      <ul class="account-list">
+        {% for p in client.properties_json %}
+        <li><span class="strong">{{ p.label }}</span><span class="muted small">{{ p.address }}</span></li>
+        {% else %}
+        <li class="muted">None</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div>
+      <h3>Liabilities</h3>
+      <ul class="account-list">
+        {% for l in client.liabilities_json %}
+        <li>
+          <span class="strong">{{ l.label }}</span>
+          <span class="muted small">{{ l.institution }} · {{ l.interest_rate }}%</span>
+        </li>
+        {% else %}
+        <li class="muted">None</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Report History</h2>
+  {% if reports %}
+  <table class="data-table">
+    <thead>
+      <tr><th>Period</th><th>Generated</th><th>Net Worth</th><th>Excess / mo</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for r in reports %}
+      <tr>
+        <td><strong>{{ r.period_label }}</strong></td>
+        <td>{{ r.created_at.strftime('%b %d, %Y') }}</td>
+        <td class="num">{{ r.calculated_json.grand_total | money }}</td>
+        <td class="num">{{ r.calculated_json.excess | money_signed }}</td>
+        <td class="row-actions">
+          <a href="{{ url_for('report_preview', report_id=r.id) }}" class="btn btn-sm">View</a>
+          <a href="{{ url_for('report_sacs_pdf', report_id=r.id) }}" class="btn btn-sm">SACS PDF</a>
+          <a href="{{ url_for('report_tcc_pdf', report_id=r.id) }}" class="btn btn-sm">TCC PDF</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">No reports yet. Click <strong>Start New Quarterly Report</strong> to begin.</p>
+  {% endif %}
+</section>
+{% endblock %}

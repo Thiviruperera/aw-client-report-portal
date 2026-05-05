@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}{{ client.household_name }} — {{ report.period_label }}{% endblock %}
+
+{% set c = report.calculated_json %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <a href="{{ url_for('client_detail', client_id=client.id) }}" class="back-link">&larr; {{ client.household_name }}</a>
+    <h1>{{ report.period_label }} Report</h1>
+    <p class="muted">Generated {{ report.created_at.strftime('%B %d, %Y at %H:%M UTC') }}</p>
+  </div>
+  <div class="pdf-actions">
+    <a href="{{ url_for('report_sacs_pdf', report_id=report.id) }}" class="btn btn-primary" target="_blank">Download SACS PDF</a>
+    <a href="{{ url_for('report_tcc_pdf', report_id=report.id) }}" class="btn btn-primary" target="_blank">Download TCC PDF</a>
+  </div>
+</div>
+
+<section class="card">
+  <h2>SACS — Cashflow Summary</h2>
+  <div class="grid four-col big-numbers">
+    <div><span class="muted small">Inflow</span><div class="num huge inflow">{{ report.inputs_json.cashflow.inflow | money }}</div></div>
+    <div><span class="muted small">Outflow</span><div class="num huge outflow">{{ report.inputs_json.cashflow.outflow | money }}</div></div>
+    <div><span class="muted small">Excess / mo</span><div class="num huge reserve">{{ c.excess | money_signed }}</div></div>
+    <div><span class="muted small">Private Reserve Target</span><div class="num huge">{{ c.private_reserve_target | money }}</div></div>
+  </div>
+  <div class="grid two-col big-numbers">
+    <div><span class="muted small">Private Reserve Balance</span><div class="num strong">{{ report.inputs_json.cashflow.private_reserve_balance | money }}</div></div>
+    <div><span class="muted small">Schwab Investment Balance</span><div class="num strong">{{ report.inputs_json.cashflow.schwab_investment_balance | money }}</div></div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>TCC — Net Worth Summary</h2>
+  <div class="grid four-col big-numbers">
+    <div><span class="muted small">{{ client.primary_first }}'s Retirement</span><div class="num strong">{{ c.c1_retirement_total | money }}</div></div>
+    {% if client.has_spouse %}
+    <div><span class="muted small">{{ client.spouse_first }}'s Retirement</span><div class="num strong">{{ c.c2_retirement_total | money }}</div></div>
+    {% endif %}
+    <div><span class="muted small">Non-Retirement</span><div class="num strong">{{ c.non_retirement_total | money }}</div></div>
+    <div><span class="muted small">Trust</span><div class="num strong">{{ c.trust_total | money }}</div></div>
+  </div>
+  <div class="grand-total">
+    <span class="muted small">Grand Total Net Worth</span>
+    <div class="num huge brand-blue">{{ c.grand_total | money }}</div>
+    <div class="muted small">Liabilities Total: {{ c.liabilities_total | money }} <em>(displayed separately, not subtracted from net worth)</em></div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Account Balances</h2>
+  <table class="data-table">
+    <thead><tr><th>Owner</th><th>Account</th><th>Institution</th><th class="num">Balance</th><th class="num">Cash</th></tr></thead>
+    <tbody>
+      {% for a in client.accounts_json %}
+      {% set b = report.inputs_json.account_balances[a.key] %}
+      <tr>
+        <td><span class="badge owner-{{ a.owner | lower }}">{{ 'Client 1' if a.owner == 'CLIENT1' else 'Client 2' if a.owner == 'CLIENT2' else 'Joint' }}</span></td>
+        <td>{{ a.label }} <span class="muted small">…{{ a.last_four }}</span></td>
+        <td>{{ a.institution }}</td>
+        <td class="num">{{ b.balance | money }}</td>
+        <td class="num">{{ b.cash_balance | money }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

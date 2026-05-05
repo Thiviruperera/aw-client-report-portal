@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}New Report · {{ client.household_name }}{% endblock %}
+
+{% macro money_input(name, label, last_value=None, submitted_value=None, required=True) %}
+{% set sub = submitted_value if submitted_value is not none else '' %}
+<div class="field">
+  <label for="{{ name }}">{{ label }}{% if required %} <span class="req">*</span>{% endif %}</label>
+  <div class="money-input">
+    <span class="prefix">$</span>
+    <input type="text" id="{{ name }}" name="{{ name }}" inputmode="decimal"
+           value="{{ sub }}" autocomplete="off">
+  </div>
+  {% if last_value is not none %}
+    <div class="hint">
+      Last quarter: <strong>${{ '{:,}'.format(last_value) }}</strong>
+      <button type="button" class="link-btn" onclick="document.getElementById('{{ name }}').value = '{{ last_value }}'">Use last</button>
+    </div>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <a href="{{ url_for('client_detail', client_id=client.id) }}" class="back-link">&larr; {{ client.household_name }}</a>
+    <h1>New Quarterly Report</h1>
+    <p class="muted">Static fields come from the client profile. Enter the current-quarter balances below — the form blocks submission until everything required is filled.</p>
+  </div>
+</div>
+
+{% if errors %}
+<div class="card error-card">
+  <h3>Cannot generate report — {{ errors | length }} field{{ '' if errors|length == 1 else 's' }} missing</h3>
+  <ul>
+    {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<form method="post" action="{{ url_for('report_create', client_id=client.id) }}" class="report-form">
+
+  <section class="card">
+    <h2>Period</h2>
+    <div class="field">
+      <label for="period_label">Period label</label>
+      <input type="text" id="period_label" name="period_label" value="{{ suggested_period }}" required>
+      <div class="hint">Format like <code>2026-Q2</code>. Used in the PDF header and history list.</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>SACS — Cashflow</h2>
+    <div class="grid two-col">
+      {{ money_input('cashflow.inflow', 'Monthly Inflow',
+         last_value=last_inputs.cashflow.inflow if last_inputs else None,
+         submitted_value=submitted.cashflow.inflow if submitted.get('cashflow') else None) }}
+      {{ money_input('cashflow.outflow', 'Monthly Outflow',
+         last_value=last_inputs.cashflow.outflow if last_inputs else None,
+         submitted_value=submitted.cashflow.outflow if submitted.get('cashflow') else None) }}
+      {{ money_input('cashflow.private_reserve_balance', 'Private Reserve Balance',
+         last_value=last_inputs.cashflow.private_reserve_balance if last_inputs else None,
+         submitted_value=submitted.cashflow.private_reserve_balance if submitted.get('cashflow') else None) }}
+      {{ money_input('cashflow.schwab_investment_balance', 'Schwab Investment Balance',
+         last_value=last_inputs.cashflow.schwab_investment_balance if last_inputs else None,
+         submitted_value=submitted.cashflow.schwab_investment_balance if submitted.get('cashflow') else None) }}
+    </div>
+  </section>
+
+  {% set retirement_c1 = client.accounts_json | selectattr('owner', 'equalto', 'CLIENT1') | selectattr('category', 'equalto', 'RETIREMENT') | list %}
+  {% set retirement_c2 = client.accounts_json | selectattr('owner', 'equalto', 'CLIENT2') | selectattr('category', 'equalto', 'RETIREMENT') | list %}
+  {% set non_retirement = client.accounts_json | selectattr('category', 'equalto', 'NON_RETIREMENT') | list %}
+
+  {% if retirement_c1 %}
+  <section class="card">
+    <h2>{{ client.primary_first }}'s Retirement Accounts</h2>
+    <div class="grid two-col">
+      {% for a in retirement_c1 %}
+      {{ money_input('account.' ~ a.key ~ '.balance', a.label ~ ' (' ~ a.institution ~ ' …' ~ a.last_four ~ ') — Balance',
+         last_value=last_inputs.account_balances[a.key].balance if last_inputs else None,
+         submitted_value=submitted.account_balances[a.key].balance if submitted.get('account_balances') and a.key in submitted.account_balances else None) }}
+      {% if a.is_investment %}
+      {{ money_input('account.' ~ a.key ~ '.cash_balance', a.label ~ ' — Cash Balance',
+         last_value=last_inputs.account_balances[a.key].cash_balance if last_inputs else None,
+         submitted_value=submitted.account_balances[a.key].cash_balance if submitted.get('account_balances') and a.key in submitted.account_balances else None) }}
+      {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if retirement_c2 %}
+  <section class="card">
+    <h2>{{ client.spouse_first }}'s Retirement Accounts</h2>
+    <div class="grid two-col">
+      {% for a in retirement_c2 %}
+      {{ money_input('account.' ~ a.key ~ '.balance', a.label ~ ' (' ~ a.institution ~ ' …' ~ a.last_four ~ ') — Balance',
+         last_value=last_inputs.account_balances[a.key].balance if last_inputs else None,
+         submitted_value=submitted.account_balances[a.key].balance if submitted.get('account_balances') and a.key in submitted.account_balances else None) }}
+      {% if a.is_investment %}
+      {{ money_input('account.' ~ a.key ~ '.cash_balance', a.label ~ ' — Cash Balance',
+         last_value=last_inputs.account_balances[a.key].cash_balance if last_inputs else None,
+         submitted_value=submitted.account_balances[a.key].cash_balance if submitted.get('account_balances') and a.key in submitted.account_balances else None) }}
+      {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if non_retirement %}
+  <section class="card">
+    <h2>Non-Retirement Accounts</h2>
+    <div class="grid two-col">
+      {% for a in non_retirement %}
+      {{ money_input('account.' ~ a.key ~ '.balance', a.label ~ ' (' ~ a.institution ~ ' …' ~ a.last_four ~ ') — Balance',
+         last_value=last_inputs.account_balances[a.key].balance if last_inputs else None,
+         submitted_value=submitted.account_balances[a.key].balance if submitted.get('account_balances') and a.key in submitted.account_balances else None) }}
+      {% if a.is_investment %}
+      {{ money_input('account.' ~ a.key ~ '.cash_balance', a.label ~ ' — Cash Balance',
+         last_value=last_inputs.account_balances[a.key].cash_balance if last_inputs else None,
+         submitted_value=submitted.account_balances[a.key].cash_balance if submitted.get('account_balances') and a.key in submitted.account_balances else None) }}
+      {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if client.properties_json %}
+  <section class="card">
+    <h2>Trust Properties (Zillow Zestimate)</h2>
+    <div class="grid two-col">
+      {% for p in client.properties_json %}
+      {{ money_input('property.' ~ p.key, p.label ~ ' — ' ~ p.address,
+         last_value=last_inputs.property_values[p.key] if last_inputs else None,
+         submitted_value=submitted.property_values[p.key] if submitted.get('property_values') else None) }}
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if client.liabilities_json %}
+  <section class="card">
+    <h2>Liabilities</h2>
+    <p class="muted small">Liabilities are displayed but never subtracted from net worth (per PRD).</p>
+    <div class="grid two-col">
+      {% for l in client.liabilities_json %}
+      {{ money_input('liability.' ~ l.key, l.label ~ ' (' ~ l.institution ~ ' @ ' ~ l.interest_rate ~ '%) — Balance',
+         last_value=last_inputs.liability_balances[l.key] if last_inputs else None,
+         submitted_value=submitted.liability_balances[l.key] if submitted.get('liability_balances') else None) }}
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <div class="form-actions">
+    <a href="{{ url_for('client_detail', client_id=client.id) }}" class="btn">Cancel</a>
+    <button type="submit" class="btn btn-primary btn-lg">Validate &amp; Generate Report</button>
+  </div>
+</form>
+{% endblock %}

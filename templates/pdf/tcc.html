@@ -1,0 +1,363 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>TCC — {{ client.household_name }} {{ report.period_label }}</title>
+<style>{% include 'pdf/_base.css' %}
+
+.tcc-canvas {
+  position: absolute;
+  top: 0.95in; left: 0.35in; right: 0.35in; bottom: 0.45in;
+}
+
+.client-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10pt;
+  margin-bottom: 8pt;
+}
+.client-pill {
+  background: #2e7d3a;
+  color: white;
+  border-radius: 8pt;
+  padding: 7pt 12pt;
+  display: flex;
+  flex-direction: column;
+}
+.client-pill.solo { grid-column: 1 / span 2; }
+.client-pill .name {
+  font-size: 12pt;
+  font-weight: 700;
+  letter-spacing: 0.3pt;
+}
+.client-pill .meta {
+  font-size: 8pt;
+  margin-top: 2pt;
+  opacity: 0.9;
+}
+
+.tcc-section {
+  margin-bottom: 7pt;
+}
+.tcc-section .section-title {
+  margin-bottom: 4pt;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 9.5pt;
+}
+.tcc-section .section-title .total-pill {
+  background: #1f4e79;
+  color: white;
+  font-size: 8pt;
+  padding: 2pt 9pt;
+  border-radius: 9pt;
+  letter-spacing: 0.4pt;
+  text-transform: none;
+  font-weight: 600;
+}
+.tcc-section.retirement .section-title { color: #1f4e79; }
+.tcc-section.non-retirement .section-title { color: #2e6cad; }
+
+.bubble-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5pt;
+}
+.bubble-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+.bubble-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+.bubble-grid.cols-5 { grid-template-columns: repeat(5, 1fr); }
+.bubble-grid.cols-6 { grid-template-columns: repeat(6, 1fr); }
+
+.account-card {
+  background: white;
+  border: 1pt solid #1f4e79;
+  border-radius: 6pt;
+  padding: 5pt 8pt;
+  font-size: 8pt;
+  position: relative;
+}
+.account-card .acct-label {
+  font-size: 8.5pt;
+  font-weight: 700;
+  color: #1f4e79;
+  line-height: 1.15;
+}
+.account-card .acct-meta {
+  font-size: 7pt;
+  color: #6b7785;
+  margin-top: 1pt;
+  margin-bottom: 3pt;
+}
+.account-card .acct-balance {
+  font-size: 11pt;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.account-card .acct-cash {
+  font-size: 7pt;
+  color: #6b7785;
+  margin-top: 1pt;
+  font-variant-numeric: tabular-nums;
+}
+.account-card.non-ret { border-color: #2e6cad; }
+.account-card.non-ret .acct-label { color: #2e6cad; }
+
+.middle-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 8pt;
+  margin: 7pt 0;
+}
+
+.trust-card {
+  background: #fff8e1;
+  border: 1pt solid #d4a017;
+  border-radius: 8pt;
+  padding: 8pt 11pt;
+}
+.trust-card .header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4pt;
+}
+.trust-card h3 {
+  color: #b86e00;
+  font-size: 9.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.5pt;
+}
+.trust-card .total-pill {
+  background: #b86e00;
+  color: white;
+  font-size: 8pt;
+  padding: 2pt 9pt;
+  border-radius: 9pt;
+  font-weight: 600;
+}
+.trust-card .property {
+  display: flex;
+  justify-content: space-between;
+  padding: 2pt 0;
+  font-size: 8.5pt;
+}
+.trust-card .property .addr { color: #1a2330; }
+.trust-card .property .addr small { color: #6b7785; display: block; font-size: 7pt; }
+.trust-card .property .num { font-weight: 700; }
+
+.liabilities-card {
+  background: #fdecea;
+  border: 1pt solid #c0392b;
+  border-radius: 8pt;
+  padding: 8pt 11pt;
+}
+.liabilities-card .header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4pt;
+}
+.liabilities-card h3 {
+  color: #c0392b;
+  font-size: 9.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.5pt;
+}
+.liabilities-card .total-pill {
+  background: #c0392b;
+  color: white;
+  font-size: 8pt;
+  padding: 2pt 9pt;
+  border-radius: 9pt;
+  font-weight: 600;
+}
+.liabilities-card .liab {
+  display: flex;
+  justify-content: space-between;
+  padding: 2pt 0;
+  font-size: 8.5pt;
+}
+.liabilities-card .liab .num { font-weight: 700; }
+.liabilities-card .footnote {
+  font-size: 7pt;
+  color: #6b7785;
+  margin-top: 3pt;
+  font-style: italic;
+}
+
+.grand-total-bar {
+  background: #1f4e79;
+  color: white;
+  border-radius: 8pt;
+  padding: 10pt 18pt;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 5pt;
+}
+.grand-total-bar .lbl {
+  font-size: 10pt;
+  text-transform: uppercase;
+  letter-spacing: 0.6pt;
+  font-weight: 700;
+}
+.grand-total-bar .amt {
+  font-size: 20pt;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+</style>
+</head>
+<body>
+
+{% set calc = report.calculated_json %}
+{% set bal = report.inputs_json.account_balances %}
+{% set liab_bal = report.inputs_json.liability_balances %}
+{% set prop_vals = report.inputs_json.property_values %}
+
+{% set retirement_c1 = client.accounts_json | selectattr('owner', 'equalto', 'CLIENT1') | selectattr('category', 'equalto', 'RETIREMENT') | list %}
+{% set retirement_c2 = client.accounts_json | selectattr('owner', 'equalto', 'CLIENT2') | selectattr('category', 'equalto', 'RETIREMENT') | list %}
+{% set non_retirement = client.accounts_json | selectattr('category', 'equalto', 'NON_RETIREMENT') | list %}
+
+<div class="page">
+  <div class="header">
+    <div class="title">TCC</div>
+    <div class="subtitle">Total Client Chart — Net Worth Overview</div>
+    <div class="meta">
+      <div><strong>{{ client.household_name }}</strong></div>
+      <div>{{ report.period_label }} · {{ report.created_at.strftime('%b %d, %Y') }}</div>
+    </div>
+  </div>
+
+  <div class="tcc-canvas">
+
+    <div class="client-strip">
+      <div class="client-pill {% if not client.has_spouse %}solo{% endif %}">
+        <div class="name">{{ client.primary_first }} {{ client.primary_last }}</div>
+        <div class="meta">DOB {{ client.primary_dob.strftime('%b %d, %Y') }} · Age {{ client.primary_age }} · SSN&nbsp;…{{ client.primary_ssn_last4 }}</div>
+      </div>
+      {% if client.has_spouse %}
+      <div class="client-pill">
+        <div class="name">{{ client.spouse_first }} {{ client.spouse_last }}</div>
+        <div class="meta">DOB {{ client.spouse_dob.strftime('%b %d, %Y') }} · Age {{ client.spouse_age }} · SSN&nbsp;…{{ client.spouse_ssn_last4 }}</div>
+      </div>
+      {% endif %}
+    </div>
+
+    {% macro col_class(n) -%}
+    cols-{{ 3 if n <= 3 else (4 if n <= 4 else (5 if n <= 5 else 6)) }}
+    {%- endmacro %}
+
+    {% if retirement_c1 %}
+    <div class="tcc-section retirement">
+      <div class="section-title">
+        <span>{{ client.primary_first }}'s Retirement</span>
+        <span class="total-pill">Total: ${{ '{:,}'.format(calc.c1_retirement_total) }}</span>
+      </div>
+      <div class="bubble-grid {{ col_class(retirement_c1|length) }}">
+        {% for a in retirement_c1 %}
+        <div class="account-card">
+          <div class="acct-label">{{ a.label }}</div>
+          <div class="acct-meta">{{ a.institution }} ·&nbsp;…{{ a.last_four }}</div>
+          <div class="acct-balance">${{ '{:,}'.format(bal[a.key].balance) }}</div>
+          {% if a.is_investment and bal[a.key].cash_balance is not none %}
+          <div class="acct-cash">Cash: ${{ '{:,}'.format(bal[a.key].cash_balance) }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if retirement_c2 %}
+    <div class="tcc-section retirement">
+      <div class="section-title">
+        <span>{{ client.spouse_first }}'s Retirement</span>
+        <span class="total-pill">Total: ${{ '{:,}'.format(calc.c2_retirement_total) }}</span>
+      </div>
+      <div class="bubble-grid {{ col_class(retirement_c2|length) }}">
+        {% for a in retirement_c2 %}
+        <div class="account-card">
+          <div class="acct-label">{{ a.label }}</div>
+          <div class="acct-meta">{{ a.institution }} ·&nbsp;…{{ a.last_four }}</div>
+          <div class="acct-balance">${{ '{:,}'.format(bal[a.key].balance) }}</div>
+          {% if a.is_investment and bal[a.key].cash_balance is not none %}
+          <div class="acct-cash">Cash: ${{ '{:,}'.format(bal[a.key].cash_balance) }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="middle-row">
+      {% if client.properties_json %}
+      <div class="trust-card">
+        <div class="header-row">
+          <h3>Trust</h3>
+          <span class="total-pill">Total: ${{ '{:,}'.format(calc.trust_total) }}</span>
+        </div>
+        {% for p in client.properties_json %}
+        <div class="property">
+          <span class="addr">{{ p.label }}<small>{{ p.address }}</small></span>
+          <span class="num">${{ '{:,}'.format(prop_vals[p.key]) }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if client.liabilities_json %}
+      <div class="liabilities-card">
+        <div class="header-row">
+          <h3>Liabilities</h3>
+          <span class="total-pill">Total: ${{ '{:,}'.format(calc.liabilities_total) }}</span>
+        </div>
+        {% for l in client.liabilities_json %}
+        <div class="liab">
+          <span>{{ l.label }} <span style="color:#6b7785; font-size:7.5pt;">· {{ l.institution }} @ {{ l.interest_rate }}%</span></span>
+          <span class="num">${{ '{:,}'.format(liab_bal[l.key]) }}</span>
+        </div>
+        {% endfor %}
+        <div class="footnote">Displayed separately. Not subtracted from net worth.</div>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if non_retirement %}
+    <div class="tcc-section non-retirement">
+      <div class="section-title">
+        <span>Non-Retirement (Joint)</span>
+        <span class="total-pill" style="background:#2e6cad;">Total: ${{ '{:,}'.format(calc.non_retirement_total) }}</span>
+      </div>
+      <div class="bubble-grid {{ col_class(non_retirement|length) }}">
+        {% for a in non_retirement %}
+        <div class="account-card non-ret">
+          <div class="acct-label">{{ a.label }}</div>
+          <div class="acct-meta">{{ a.institution }} ·&nbsp;…{{ a.last_four }}</div>
+          <div class="acct-balance">${{ '{:,}'.format(bal[a.key].balance) }}</div>
+          {% if a.is_investment and bal[a.key].cash_balance is not none %}
+          <div class="acct-cash">Cash: ${{ '{:,}'.format(bal[a.key].cash_balance) }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="grand-total-bar">
+      <span class="lbl">Grand Total Net Worth</span>
+      <span class="amt">${{ '{:,}'.format(calc.grand_total) }}</span>
+    </div>
+
+  </div>
+
+  <div class="footer-bar">
+    <span>{{ client.household_name }} · {{ report.period_label }}</span>
+    <span style="float: right;">TCC — Total Client Chart</span>
+  </div>
+</div>
+
+</body>
+</html>

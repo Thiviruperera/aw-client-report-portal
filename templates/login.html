@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Sign in · AW Client Report Portal{% endblock %}
+
+{% block content %}
+<div class="login-card">
+  <h1>Sign in</h1>
+  <p class="muted">Internal portal — shared password.</p>
+  <form method="post" action="{{ url_for('login') }}">
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" autofocus required>
+    <button type="submit" class="btn btn-primary">Sign in</button>
+  </form>
+  <p class="muted small">Demo password is <code>demo</code> unless overridden via the <code>APP_PASSWORD</code> environment variable.</p>
+</div>
+{% endblock %}

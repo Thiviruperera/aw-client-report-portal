@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Clients · AW Client Report Portal{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Clients</h1>
+    <p class="muted">Quarterly meeting prep — click a client to start a new report.</p>
+  </div>
+</div>
+
+{% if clients %}
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Household</th>
+      <th>Members</th>
+      <th>Last report</th>
+      <th>Net worth (last)</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in clients %}
+    {% set last = c.latest_report %}
+    <tr>
+      <td><a href="{{ url_for('client_detail', client_id=c.id) }}" class="strong">{{ c.household_name }}</a></td>
+      <td>
+        {{ c.primary_first }} {{ c.primary_last }}
+        {% if c.has_spouse %} &middot; {{ c.spouse_first }} {{ c.spouse_last }}{% endif %}
+      </td>
+      <td>
+        {% if last %}{{ last.period_label }} <span class="muted small">({{ last.created_at.strftime('%b %d, %Y') }})</span>
+        {% else %}<span class="muted">No reports yet</span>{% endif %}
+      </td>
+      <td class="num">
+        {% if last %}{{ last.calculated_json.grand_total | money }}{% else %}—{% endif %}
+      </td>
+      <td class="row-actions">
+        <a href="{{ url_for('report_new', client_id=c.id) }}" class="btn btn-primary btn-sm">New Report</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="empty">
+  <p>No clients seeded yet.</p>
+  <p class="muted small">Run <code>python seed.py</code> to create the demo client.</p>
+</div>
+{% endif %}
+{% endblock %}

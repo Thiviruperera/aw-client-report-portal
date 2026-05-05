@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip show *)",
+      "Bash(curl -s -o /dev/null -w \"form: %{http_code}\\\\n\" http://127.0.0.1:5001/login -b /tmp/cookies.txt)",
+      "Bash(curl -s -X POST -d \"period_label=2026-Q2&cashflow.inflow=33000&cashflow.outflow=22000&cashflow.private_reserve_balance=92000&cashflow.schwab_investment_balance=425000&account.c1_401k.balance=425000&account.c1_401k.cash_balance=4500&account.c1_roth.balance=94500&account.c1_roth.cash_balance=1200&account.c1_ira.balance=159000&account.c1_ira.cash_balance=2500&account.c2_401k.balance=292000&account.c2_401k.cash_balance=3700&account.c2_roth.balance=73000&account.c2_roth.cash_balance=900&account.joint_brokerage.balance=425000&account.joint_brokerage.cash_balance=9100&account.joint_checking.balance=19500&account.joint_savings.balance=92000&liability.mortgage=410000&liability.auto=27500&property.primary_residence=890000\" -b /tmp/cookies.txt http://127.0.0.1:5001/clients/1/reports -o /dev/null -L -w \"submit: %{http_code} \\(final url: %{url_effective}\\)\\\\n\")",
+      "Bash(taskkill //IM python.exe //F)",
+      "Bash(rm -f /tmp/cookies.txt)",
+      "Bash(curl -s -c /tmp/cookies.txt -X POST -d \"password=demo\" http://127.0.0.1:5001/login -o /dev/null -w \"login: %{http_code}\\\\n\")",
+      "Bash(curl -s -b /tmp/cookies.txt -o /dev/null -w '__TRACKED_VAR__: %{http_code} %{size_download}b\\\\n' http://127.0.0.1:5001__TRACKED_VAR__)",
+      "Bash(curl -s -b /tmp/cookies.txt -X POST -d \"period_label=2026-Q2&cashflow.inflow=33000&cashflow.outflow=22000&cashflow.private_reserve_balance=92000&cashflow.schwab_investment_balance=425000&account.c1_401k.balance=425000&account.c1_401k.cash_balance=4500&account.c1_roth.balance=94500&account.c1_roth.cash_balance=1200&account.c1_ira.balance=159000&account.c1_ira.cash_balance=2500&account.c2_401k.balance=292000&account.c2_401k.cash_balance=3700&account.c2_roth.balance=73000&account.c2_roth.cash_balance=900&account.joint_brokerage.balance=425000&account.joint_brokerage.cash_balance=9100&account.joint_checking.balance=19500&account.joint_savings.balance=92000&liability.mortgage=410000&liability.auto=27500&property.primary_residence=890000\" http://127.0.0.1:5001/clients/1/reports -o /dev/null -w \"submit: %{http_code} → %{redirect_url}\\\\n\")",
+      "Bash(curl -s -b /tmp/cookies.txt http://127.0.0.1:5001/reports/2 -o /dev/null -w \"new preview: %{http_code}\\\\n\")",
+      "Bash(curl -s -b /tmp/cookies.txt http://127.0.0.1:5001/reports/2/sacs.pdf -o /dev/null -w \"new SACS: %{http_code} %{size_download}b\\\\n\")"
+    ]
+  }
+}
