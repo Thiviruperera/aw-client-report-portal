@@ -28,7 +28,7 @@ The seeded client has a complete prior-quarter report already, so the prefill, h
 | Database | SQLite via SQLAlchemy | 6 clients, 1 writer. Zero ops overhead. Two tables (`clients`, `reports`) with JSON columns for nested account/liability/property structure. |
 | PDF generation | WeasyPrint | HTML/CSS handles the variable-bubble TCC layout trivially with CSS Grid. ReportLab's coordinate model would have consumed the entire time budget. |
 | Frontend | Plain HTML + a tiny CSS file | No JS framework. Form submits → server-rendered preview. Demo readability over interactivity. |
-| Deployment | Railway via `nixpacks.toml` | Cairo/Pango/Pango/HarfBuzz declared as system packages so WeasyPrint works in production. |
+| Deployment | Railway via `Dockerfile` | `python:3.11-slim` + `apt-get install` puts Cairo/Pango/HarfBuzz at standard `/usr/lib` paths so WeasyPrint's `cffi.dlopen()` finds them without any `LD_LIBRARY_PATH` gymnastics. |
 
 ### Static vs dynamic data separation
 
@@ -94,7 +94,7 @@ Visit <http://127.0.0.1:5000>, sign in with password `demo`.
 
 5. Deploy. The first boot auto-seeds the demo client if the DB is empty (`_auto_seed_if_empty` in `app.py`).
 
-`nixpacks.toml` declares Cairo, Pango, HarfBuzz, and friends so WeasyPrint runs in the build image.
+The `Dockerfile` installs Cairo, Pango, HarfBuzz, and friends via `apt-get` so they land at standard system library paths that WeasyPrint can find.
 
 ---
 
@@ -121,9 +121,7 @@ fin-report-portal/
 ├── tests/
 │   ├── test_calculations.py    # 22 tests covering every PRD rule
 │   └── test_pdf_smoke.py       # 3 tests: TCC renders with 1, 3, 6 bubbles
-├── nixpacks.toml           # Railway build config
-├── Procfile
-├── runtime.txt             # Python 3.11.9 for Railway (3.14 is pre-release)
+├── Dockerfile              # Railway build — python:3.11-slim + apt Cairo/Pango stack
 └── requirements.txt
 ```
 
