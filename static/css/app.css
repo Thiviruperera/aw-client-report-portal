@@ -179,6 +179,8 @@ code { background: #eef1f5; padding: 1px 5px; border-radius: 3px; font-size: 13p
 .btn-primary:hover { background: var(--brand-blue-light); border-color: var(--brand-blue-light); color: white; }
 .btn-sm { padding: 5px 10px; font-size: 13px; }
 .btn-lg { padding: 12px 20px; font-size: 16px; }
+.btn-danger { color: var(--danger); border-color: #e8b4b4; }
+.btn-danger:hover { background: var(--danger-bg); border-color: var(--danger); }
 
 .link-btn {
   background: transparent;

@@ -157,6 +157,16 @@ def report_tcc_pdf(report_id):
     return _render_pdf("pdf/tcc.html", report, suffix="TCC")
 
 
+@app.route("/reports/<int:report_id>/delete", methods=["POST"])
+@require_login
+def report_delete(report_id):
+    report = Report.query.get_or_404(report_id)
+    client_id = report.client_id
+    db.session.delete(report)
+    db.session.commit()
+    return redirect(url_for("client_detail", client_id=client_id))
+
+
 # ---------- Helpers ----------
 
 def _client_to_data(client):
